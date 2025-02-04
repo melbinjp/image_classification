@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CLIP Zero-Shot Image Classification</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 600px; margin: auto; text-align: center; }
+    #preview { max-width: 100%; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CLIP Zero-Shot Classification</h1>
+    <input type="file" id="imageUpload" accept="image/*">
+    <br>
+    <img id="preview" src="" alt="Image Preview">
+    <br>
+    <button id="classifyButton">Classify Image</button>
+    <pre id="result"></pre>
+  </div>
+  <!-- Our application script as a module -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
