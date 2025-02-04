@@ -1,25 +1,353 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CLIP Zero-Shot Image Classification</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .container { max-width: 600px; margin: auto; text-align: center; }
-    #preview { max-width: 100%; margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Shot Image Classifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --background: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            font-family: 'Segoe UI', system-ui;
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: white;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: #f1f5f9;
+        }
+
+        .preview-container {
+            position: relative;
+            margin: 2rem 0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #preview {
+            max-width: 100%;
+            display: none;
+        }
+
+        .results {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            transition: 0.3s width ease-out;
+        }
+
+        .label-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .model-status {
+            color: #64748b;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confidence-meter {
+            display: grid;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .confidence-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f1f5f9;
+            border-radius: 0.25rem;
+        }
+    </style>
+    <style>
+    .multi-progress {
+        margin: 1rem 0;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-stage {
+        height: 8px;
+        background: var(--primary);
+        transition: 0.3s width ease-out;
+    }
+
+    .progress-labels {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.5rem 0;
+        color: #64748b;
+    }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>CLIP Zero-Shot Classification</h1>
-    <input type="file" id="imageUpload" accept="image/*">
-    <br>
-    <img id="preview" src="" alt="Image Preview">
-    <br>
-    <button id="classifyButton">Classify Image</button>
-    <pre id="result"></pre>
-  </div>
-  <!-- Our application script as a module -->
-  <script type="module" src="app.js"></script>
+    <div class="container">
+        <h1>Zero-Shot Image Classifier</h1>
+        <div class="model-status">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <span>Loading AI model (≈15MB)...</span>
+        </div>
+
+        <div class="upload-zone" id="dropZone">
+            <i class="fas fa-cloud-upload-alt fa-3x" style="color: #cbd5e1;"></i>
+            <p>Drag & drop image or click to upload</p>
+            <input type="file" id="imageUpload" accept="image/*" hidden>
+        </div>
+
+        <div class="preview-container">
+            <img id="preview">
+        </div>
+
+        <input type="text" class="label-input" 
+               placeholder="Enter comma-separated labels (e.g., cat, dog, car)"
+               value="cat, dog, car, bird, airplane, horse">
+
+        <div class="results">
+            <div class="progress-bar">
+                <div class="progress" style="width: 0%"></div>
+            </div>
+            <div id="result"></div>
+            <div class="confidence-meter"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { pipeline, AutoProcessor, AutoModel } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@latest/dist/transformers.js';
+
+        const MODEL_NAME = 'Xenova/clip-vit-base-patch16';
+        let model, processor, textEmbeddings, cachedLabels;
+
+        // UI Elements
+        const elements = {
+            uploadZone: document.getElementById('dropZone'),
+            preview: document.getElementById('preview'),
+            result: document.getElementById('result'),
+            progress: document.querySelector('.progress'),
+            modelStatus: document.querySelector('.model-status'),
+            confidenceMeter: document.querySelector('.confidence-meter'),
+            labelInput: document.querySelector('.label-input')
+        };
+
+        // Model initialization
+        async function initializeModel() {
+            try {
+                model = await AutoModel.from_pretrained(MODEL_NAME, { quantized: true });
+                processor = await AutoProcessor.from_pretrained(MODEL_NAME);
+                elements.modelStatus.innerHTML = 
+                    `<i class="fas fa-check-circle" style="color: #10b981"></i> Model ready!`;
+            } catch (error) {
+                elements.modelStatus.innerHTML = 
+                    `<i class="fas fa-times-circle" style="color: #ef4444"></i> Model failed to load`;
+                console.error('Model loading error:', error);
+            }
+        }
+
+        // Enhanced image handling with validation
+        function handleImage(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            if (elements.preview.src) {
+                URL.revokeObjectURL(elements.preview.src);
+            }
+            const url = URL.createObjectURL(file);
+            elements.preview.style.display = 'block';
+            elements.preview.src = url;
+            elements.progress.style.width = '0%';
+        }
+
+        // Process text labels CORRECTED
+        async function processLabels(labels) {
+            if (textEmbeddings) {
+                textEmbeddings.dispose();
+            }
+            
+            // Corrected text processing using tokenizer
+            const textInputs = await processor.tokenizer(labels, {
+                padding: true,
+                truncation: true,
+                return_tensors: "pt"
+            });
+            
+            const tempEmbeddings = await model.get_text_features({
+                input_ids: textInputs.input_ids,
+                attention_mask: textInputs.attention_mask
+            });
+            
+            textEmbeddings = tempEmbeddings.div(tempEmbeddings.norm());
+            tempEmbeddings.dispose();
+            cachedLabels = labels.join(',');
+        }
+
+        // Classification core COMPLETED
+        async function classifyImage(imageElement) {
+            let imageEmbedding, normalizedImage, similarity;
+            
+            try {
+                // CORRECTED image processing
+                const imageInputs = await processor(imageElement, {
+                    return_tensors: "pt"
+                });
+                
+                // Feature extraction
+                imageEmbedding = await model.get_image_features({
+                    pixel_values: imageInputs.pixel_values
+                });
+
+                // COMPLETED similarity calculation
+                normalizedImage = imageEmbedding.div(imageEmbedding.norm());
+                similarity = normalizedImage.matmul(textEmbeddings.transpose(0, 1));
+                
+                // COMPLETED results processing
+                const results = await similarity.squeeze().data();
+                const confidences = results.map((v, i) => ({
+                    label: cachedLabels.split(',')[i],
+                    confidence: Math.round(v * 100)
+                }));
+                
+                confidences.sort((a, b) => b.confidence - a.confidence);
+                showResults(confidences);
+                
+            } catch (error) {
+                console.error('Classification error:', error);
+                elements.result.innerHTML = `Error: ${error.message}`;
+            } finally {
+                // Cleanup tensors
+                if (imageEmbedding) imageEmbedding.dispose();
+                if (normalizedImage) normalizedImage.dispose();
+            }
+        }
+
+        function displayResults(labels, scores) {
+            const results = labels.map((label, i) => ({
+                label,
+                score: Math.round(scores[i] * 1000) / 10
+            })).sort((a, b) => b.score - a.score);
+
+            elements.confidenceMeter.innerHTML = results.map(res => `
+                <div class="confidence-item">
+                    <span>${res.label}</span>
+                    <div style="width: 200px; height: 10px; background: #e2e8f0; border-radius: 5px">
+                        <div style="width: ${res.score}%; height: 100%; 
+                            background: var(--primary); border-radius: 5px">
+                        </div>
+                    </div>
+                    <span>${res.score}%</span>
+                </div>
+            `).join('');
+
+            elements.result.innerHTML = `
+                <h3>Most likely: ${results[0].label}</h3>
+                <p>Confidence: ${results[0].score}%</p>
+            `;
+        }
+
+        // Enhanced Event Handlers
+        elements.uploadZone.addEventListener('click', () => 
+            document.getElementById('imageUpload').click());
+        
+        document.getElementById('imageUpload').addEventListener('change', (e) => {
+            if (e.target.files[0]) handleImage(e.target.files[0]);
+        });
+
+        // New Drag and Drop Event Handlers
+        elements.uploadZone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.uploadZone.style.borderColor = 'var(--primary)';
+            elements.uploadZone.style.background = '#f1f5f9';
+        });
+
+        elements.uploadZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.uploadZone.style.borderColor = '#cbd5e1';
+            elements.uploadZone.style.background = 'white';
+        });
+
+        elements.uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        elements.uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.uploadZone.style.borderColor = '#cbd5e1';
+            elements.uploadZone.style.background = 'white';
+            
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            
+            if (file) {
+                handleImage(file);
+            }
+        });
+
+        elements.preview.addEventListener('load', () => {
+            if (model) classifyImage(elements.preview);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            textEmbeddings?.dispose();
+            if (elements.preview.src) {
+                URL.revokeObjectURL(elements.preview.src);
+            }
+        });
+
+        // Initialize
+        initializeModel();
+    </script>
 </body>
 </html>
