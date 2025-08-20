@@ -10,7 +10,7 @@ import {
 // --- Model Names ---
 const ZERO_SHOT_MODEL_NAME = 'Xenova/clip-vit-base-patch16';
 const CAPTIONING_MODEL_NAME = 'Xenova/vit-gpt2-image-captioning';
-const CLASSIFICATION_MODEL_NAME = 'Xenova/mobilenet_v2_1.0_224';
+const CLASSIFICATION_MODEL_NAME = 'Xenova/google/vit-base-patch16-224';
 
 // --- Model Variables ---
 let textModel, visionModel, zeroShotTokenizer, zeroShotProcessor, textEmbeddings, cachedLabels;
