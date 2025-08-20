@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Zero-Shot Image Classifier</title>
+    <title>AI Image Inspector</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Zero-Shot Image Classifier</h1>
+        <h1>AI Image Inspector</h1>
         <div class="model-status">
             <i class="fas fa-circle-notch fa-spin"></i>
-            <span>Loading AI model (≈15MB)...</span>
+            <span>Loading AI models...</span>
         </div>
 
         <div class="upload-zone" id="dropZone">
@@ -23,16 +23,34 @@
             <img id="preview">
         </div>
 
-        <input type="text" class="label-input" 
-               placeholder="Enter comma-separated labels (e.g., cat, dog, car)"
-               value="cat, dog, car, bird, airplane, horse">
+        <div class="actions">
+            <button id="describe-btn" class="action-btn">Describe Image</button>
+            <button id="classify-btn" class="action-btn">Classify Image</button>
+        </div>
 
-        <div class="results">
-            <div class="progress-bar">
-                <div class="progress" style="width: 0%"></div>
+        <div class="results-container">
+            <div class="result-box">
+                <h2>Image Description</h2>
+                <div id="description-result" class="result-content"></div>
             </div>
-            <div id="result"></div>
-            <div class="confidence-meter"></div>
+            <div class="result-box">
+                <h2>Image Classification</h2>
+                <div id="classification-result" class="result-content"></div>
+            </div>
+        </div>
+
+        <div class="zero-shot-container">
+            <h2>Zero-Shot Classification</h2>
+            <input type="text" class="label-input"
+                   placeholder="Enter comma-separated labels (e.g., cat, dog, car)"
+                   value="cat, dog, car, bird, airplane, horse">
+            <div class="results">
+                <div class="progress-bar">
+                    <div class="progress" style="width: 0%"></div>
+                </div>
+                <div id="result"></div>
+                <div class="confidence-meter"></div>
+            </div>
         </div>
     </div>
 
