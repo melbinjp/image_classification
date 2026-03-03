@@ -1,44 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Zero-Shot Image Classifier</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Zero-Shot Image Classifier</h1>
-        <div class="model-status">
-            <i class="fas fa-circle-notch fa-spin"></i>
-            <span>Loading AI model (≈15MB)...</span>
-        </div>
-
-        <div class="upload-zone" id="dropZone">
-            <i class="fas fa-cloud-upload-alt fa-3x" style="color: #cbd5e1;"></i>
-            <p>Drag & drop image or click to upload</p>
-            <input type="file" id="imageUpload" accept="image/*" hidden>
-        </div>
-
-        <div class="preview-container">
-            <img id="preview">
-        </div>
-
-        <input type="text" class="label-input" 
-               placeholder="Enter comma-separated labels (e.g., cat, dog, car)"
-               value="cat, dog, car, bird, airplane, horse">
-
-        <div class="results">
-            <div class="progress-bar">
-                <div class="progress" style="width: 0%"></div>
-            </div>
-            <div id="result"></div>
-            <div class="confidence-meter"></div>
-        </div>
-    </div>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Shot Image Classifier | WeCanUseAI</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Include your JavaScript file -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="dark-theme">
+    <div class="background-glass"></div>
+    <div class="container">
+        <header class="header">
+            <a href="../index_page_utily/index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to
+                Portal</a>
+            <h1>Zero-Shot Image Classifier</h1>
+            <p class="subtitle">Powered by Transformers.js & CLIP running directly in your browser.</p>
+        </header>
+
+        <main class="main-card glass-panel">
+            <div class="model-status" id="modelStatus">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <span>Loading AI model (≈15MB)...</span>
+            </div>
+
+            <div class="upload-zone" id="dropZone">
+                <i class="fas fa-cloud-upload-alt fa-3x icon-gradient"></i>
+                <p>Drag & drop image or <span class="highlight">browse</span></p>
+                <input type="file" id="imageUpload" accept="image/*" hidden>
+            </div>
+
+            <div class="preview-container" id="previewContainer" style="display: none;">
+                <img id="preview" alt="Image preview">
+                <button id="clearBtn" class="clear-btn" title="Clear Image"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="input-group">
+                <label for="labelInput"><i class="fas fa-tags"></i> Classification Labels (comma-separated)</label>
+                <input type="text" id="labelInput" class="label-input" placeholder="e.g., dog, cat, car, building..."
+                    value="dog, cat, car, building, person, tree">
+                <p class="help-text" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    <em>Zero-shot means the AI will instantly try to match your image to whatever words you type here—no
+                        training required!</em>
+                </p>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
+                <div class="confidence-meter" id="confidenceMeter"></div>
+            </div>
+
+        </main>
+
+        <footer>
+            <p>100% Private - No images leave your device. <i class="fas fa-shield-alt text-success"></i></p>
+        </footer>
+    </div>
+
+    <!-- Load Transformers.js as an ES Module -->
     <script type="module" src="script.js"></script>
 </body>
+
 </html>
