@@ -63,7 +63,7 @@ This project is open source and available under the MIT License.
 
 ## 🌐 Live Demo
 
-Try the zero-shot image classifier: [Demo Link]
+Try the zero-shot image classifier: [Live Demo](https://melbinjp.github.io/image_classification/)
 
 ## 🤝 Contributing
 
