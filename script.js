@@ -17,6 +17,9 @@ const MODEL_NAME = 'Xenova/clip-vit-base-patch16';
 let textModel, visionModel, tokenizer, processor, textEmbeddings, cachedLabels;
 let isClassifying = false;
 
+// Pretext for high-performance layout
+const pretext = window.pretext || { layout: (text) => text };
+
 // UI Elements
 const elements = {
   uploadZone: document.getElementById('dropZone'),
@@ -135,17 +138,23 @@ async function classifyImage(imageElement) {
 
 // Display results dynamically
 function displayResults(probabilities) {
+  // Use Pretext layout for the container header
+  const headerContent = pretext.layout("Analysis Results");
+  
   elements.confidenceMeter.innerHTML = '';
 
   probabilities.forEach((item, index) => {
     const isTop = index === 0;
     const scoreFormatted = item.score.toFixed(1) + '%';
+    
+    // Pre-layout the label using Pretext
+    const laidOutLabel = pretext.layout(item.label);
 
     const row = document.createElement('div');
     row.className = `result-row ${isTop ? 'top-result' : ''}`;
 
     row.innerHTML = `
-            <div class="result-label" title="${item.label}">${item.label}</div>
+            <div class="result-label" title="${item.label}">${laidOutLabel}</div>
             <div class="score-bar-bg">
                 <div class="score-bar-fill" style="width: 0%"></div>
             </div>
@@ -156,7 +165,8 @@ function displayResults(probabilities) {
 
     // Trigger animation after a tiny delay
     setTimeout(() => {
-      row.querySelector('.score-bar-fill').style.width = `${item.score}%`;
+      const fill = row.querySelector('.score-bar-fill');
+      if (fill) fill.style.width = `${item.score}%`;
     }, 50);
   });
 }
