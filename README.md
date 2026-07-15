@@ -1,6 +1,6 @@
 # Zero-Shot Image Classifier
 
-A powerful AI-powered image classification tool that can identify objects in images without being pre-trained on specific categories. Uses state-of-the-art machine learning models to classify images with custom labels.
+Browser-based zero-shot image classifier for custom-label object and scene recognition.
 
 ## 🌟 Features
 
@@ -82,4 +82,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Support for video classification
 - Batch processing of multiple images
 - More advanced AI models
-- Custom model training capabilities 
+- Custom model training capabilities
