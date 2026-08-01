@@ -75,6 +75,11 @@
 
     <!-- Load Transformers.js as an ES Module -->
     <script type="module" src="script.js"></script>
+  <script>
+    document.querySelectorAll('.copyright-year').forEach(el => {
+      el.textContent = new Date().getFullYear();
+    });
+  </script>
 </body>
 
 </html>
